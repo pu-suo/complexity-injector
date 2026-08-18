@@ -95,6 +95,12 @@ docs/               engineering notes
 Model checkpoints, the ONNX export, the corpus and its derived tables are not
 in version control; they are produced by the pipeline. See `docs/model.md`.
 
+## Privacy
+
+Nothing leaves the browser: no server, no account, no network request at
+runtime. Full policy: [privacy.html](https://pu-suo.github.io/complexity-injector/privacy.html)
+(source in [PRIVACY.md](PRIVACY.md), rendered by `scripts/build_privacy_page.py`).
+
 ## Credits
 
 The target vocabulary is [GregMat](https://www.gregmat.com/)'s 900-word GRE

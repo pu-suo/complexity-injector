@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Complexity Injector</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+         max-width: 42rem; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+  h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.1rem; margin: 2rem 0 .5rem; }
+  ul { padding-left: 1.2rem; }
+  li { margin: .35rem 0; }
+  code { font-size: .9em; background: rgba(128,128,128,.15); padding: .1em .35em;
+         border-radius: 3px; }
+  a { color: #2563d6; }
+  footer { margin-top: 3rem; padding-top: 1rem; font-size: .85rem; opacity: .6;
+           border-top: 1px solid rgba(128,128,128,.3); }
+</style>
+<h1>Privacy Policy</h1>
+<p><strong>Complexity Injector</strong> — last updated 18 August 2026</p>
+<h2>Summary</h2>
+<p>This extension collects nothing, transmits nothing, and contacts no server.</p>
+<h2>What it does with page content</h2>
+<p>The extension reads visible text on pages you visit in order to find words it
+can replace. That text is processed entirely inside your browser by a language
+model bundled with the extension. It is never sent anywhere, never written to
+disk, and is discarded as soon as the page is processed.</p>
+<p>There is no analytics, no telemetry, no error reporting, and no network request
+of any kind at runtime. The extension has no server component.</p>
+<h2>What it stores</h2>
+<p>One setting: whether the extension is switched on or off. It is kept in Chrome's
+<code>storage.sync</code>, which means Chrome syncs it to your own Google account so the
+setting follows you between devices. Nothing else is stored, and the developer
+cannot see it.</p>
+<h2>Permissions</h2>
+<ul>
+<li><strong>Host access to all sites</strong> — substitution happens on whatever page you are
+  reading, and the extension cannot know in advance which sites those are. This
+  access is used only to read and rewrite visible text in the page.</li>
+<li><strong>Offscreen</strong> — the language model needs a long-lived document to run in.
+  A background service worker cannot hold it.</li>
+<li><strong>Storage</strong> — the on/off setting described above.</li>
+</ul>
+<h2>Data sharing</h2>
+<p>None. No data is collected, so none is sold, shared, or transferred.</p>
+<h2>Contact</h2>
+<p>Issues and questions: https://github.com/pu-suo/complexity-injector/issues</p>
+<footer>Complexity Injector — <a href="./">project home</a></footer>
+</html>
