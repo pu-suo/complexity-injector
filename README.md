@@ -1,3 +1,5 @@
+<img src="extension/icons/icon.png" alt="" width="96" align="right">
+
 # Complexity Injector
 
 A Chrome extension that swaps everyday words for harder equivalents as you
@@ -5,8 +7,6 @@ read. Hover a changed word to see what it replaced; click to put it back.
 
 The substitution is judged on-device by a fine-tuned cross-encoder. Nothing
 leaves the browser, and there is no API key or server.
-
-![toolbar icon](extension/icons/preview.png)
 
 ## How it works
 
@@ -94,3 +94,14 @@ docs/               engineering notes
 
 Model checkpoints, the ONNX export, the corpus and its derived tables are not
 in version control; they are produced by the pipeline. See `docs/model.md`.
+
+## Credits
+
+The target vocabulary is [GregMat](https://www.gregmat.com/)'s 900-word GRE
+list, used as the priority set the substitution table is built around. The list
+and its definitions are Greg's work; this project supplies only the machinery
+for putting those words in front of a reader. If you are studying for the GRE,
+his course is the reason this extension has anything worth teaching.
+
+Corpora: Project Gutenberg, Wikipedia, C4 (`realnewslike`), and the Stack
+Exchange data dump.

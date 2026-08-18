@@ -260,7 +260,8 @@ def main() -> None:
 
     glosses = {}
     with (INVENTORY / "gregmat_900.tsv").open() as fh:
-        for r in csv.DictReader(fh, delimiter="\t"):
+        for r in csv.DictReader((l for l in fh if not l.startswith("#")),
+                                delimiter="\t"):
             glosses[r["word"]] = r["gloss"]
 
     # The judge must not be asked to recall 900 definitions. Show the original,

@@ -94,7 +94,9 @@ def main():
 
     deferred = {r["word"] for r in csv.DictReader(
         (INVENTORY/"deferred_polysemous.tsv").open(), delimiter="\t")}
-    words = [r for r in csv.DictReader((INVENTORY/"gregmat_900.tsv").open(), delimiter="\t")
+    words = [r for r in csv.DictReader(
+        (l for l in (INVENTORY/"gregmat_900.tsv").open()
+         if not l.startswith("#")), delimiter="\t")
              if r["word"] not in deferred]
     print(f"[inv] {len(words)} active words ({len(deferred)} deferred), model={args.model}")
 

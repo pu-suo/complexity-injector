@@ -101,7 +101,8 @@ def main() -> None:
 
     glosses = {}
     with (ROOT / "data" / "inventory" / "gregmat_900.tsv").open() as fh:
-        for r in csv.DictReader(fh, delimiter="\t"):
+        for r in csv.DictReader((l for l in fh if not l.startswith("#")),
+                                delimiter="\t"):
             glosses[r["word"]] = r["gloss"]
     json.dump(glosses, (LIB / "glosses.json").open("w"),
               separators=(",", ":"), ensure_ascii=False)

@@ -66,7 +66,9 @@ def main():
 
     rules = senses.load_inversions()
     glosses = {r["word"]: r["gloss"] for r in
-               csv.DictReader((INVENTORY/"gregmat_900.tsv").open(), delimiter="\t")}
+               csv.DictReader(
+                   (l for l in (INVENTORY/"gregmat_900.tsv").open()
+                    if not l.startswith("#")), delimiter="\t")}
     by_trigger = {}
     for r in rules: by_trigger.setdefault(r["trigger"].lower(), []).append(r)
     pattern = re.compile(r"\b("+"|".join(sorted((re.escape(t) for t in by_trigger),
