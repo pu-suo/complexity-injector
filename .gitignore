@@ -30,3 +30,4 @@ data/models/
 # Third-party page captures used for offline measurement.
 samples/
 complexity-injector-*.zip
+store-assets/
