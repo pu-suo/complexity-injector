@@ -155,8 +155,9 @@ def load_priority_words() -> set[str]:
     import csv
 
     with PRIORITY_LIST.open() as fh:
-        return {r["word"].strip().lower()
-                for r in csv.DictReader(fh, delimiter="\t") if r.get("word")}
+        rows = csv.DictReader((l for l in fh if not l.startswith("#")),
+                              delimiter="\t")
+        return {r["word"].strip().lower() for r in rows if r.get("word")}
 
 
 def load_band() -> tuple[set[str], set[str], dict]:
