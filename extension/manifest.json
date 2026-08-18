@@ -1,13 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Complexity Injector",
-  "version": "0.1.0",
-  "description": "Swaps everyday words for harder equivalents in place. Hover to see the original, click to revert.",
+  "version": "1.0.0",
+  "description": "Replaces everyday words with harder equivalents as you read. Hover to see the original, click to revert.",
   "permissions": [
     "offscreen",
-    "storage",
-    "activeTab",
-    "scripting"
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"
