@@ -1,0 +1,19 @@
+# Pass 0 / Pass 1 pipeline dependencies.
+# Pure-stdlib modules (clean, segment fallback, dedup) work without any of these.
+# Loose pins deliberately: this must install cleanly on both macOS arm64 (Pass 0)
+# and Debian x86_64 (Pass 1) without building from source.
+
+blingfire>=0.1.8        # fast sentence segmentation (tier-1 bulk)
+spacy>=3.7              # tier-2 annotation: POS, lemma, dep
+datasketch>=1.6         # MinHash/LSH near-duplicate removal
+py3langid>=0.3          # language ID (pure python; no fasttext build step)
+datasets>=2.19          # HuggingFace streaming: wikipedia, c4
+pyarrow>=15             # parquet sentence store
+numpy>=1.26             # id-array counting (tier 1)
+zstandard>=0.22         # archive decompression
+py7zr>=0.21             # Stack Exchange archives are .7z
+tqdm>=4.66
+
+# spaCy models are installed separately:
+#   python -m spacy download en_core_web_sm      # tier-2 bulk
+python-dotenv>=1.0     # loads .env for the teacher-labelling run

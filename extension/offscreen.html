@@ -1,0 +1,7 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Complexity Injector — inference host</title>
+<!-- The service worker cannot reliably reach WebGPU, and it is terminated on
+     idle, which would unload a 110 MB model repeatedly. The offscreen document
+     is the supported place to hold both. -->
+<script type="module" src="offscreen.js"></script>

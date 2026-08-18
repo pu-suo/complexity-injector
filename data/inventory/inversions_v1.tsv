@@ -1,0 +1,118 @@
+# Everyday span -> priority word (DATA_PLAN §4 stage 8 / PLAN §5.2 pass 2).
+# Starter table for the hand-judging round. Contiguous spans only, per PLAN §4's
+# v1 scope. `replacement` is the exact surface form so no inflection logic is
+# needed at this stage; each trigger/replacement pair is written out.
+# pos is the expected tag of the span head.
+trigger	replacement	hard_word	pos	sense_note
+very common	ubiquitous	ubiquitous	ADJ	found everywhere
+everywhere	ubiquitous	ubiquitous	ADV	found everywhere
+short-lived	ephemeral	ephemeral	ADJ	lasting briefly
+fleeting	ephemeral	ephemeral	ADJ	lasting briefly
+talkative	loquacious	loquacious	ADJ	of a person
+chatty	garrulous	garrulous	ADJ	of a person
+stubborn	obstinate	obstinate	ADJ	refusing to change
+boring	tedious	tedious	ADJ	dull, overlong
+dull	humdrum	humdrum	ADJ	lacking variety
+pointless	futile	futile	ADJ	achieving nothing
+useless	futile	futile	ADJ	achieving nothing
+harmful	deleterious	deleterious	ADJ	causing damage
+harmless	innocuous	innocuous	ADJ	causing no harm
+watchful	vigilant	vigilant	ADJ	alert to danger
+cautious	circumspect	circumspect	ADJ	prudently wary
+shrewd	astute	astute	ADJ	sharp-witted
+wordy	verbose	verbose	ADJ	using too many words
+long-winded	verbose	verbose	ADJ	using too many words
+gloomy	morose	morose	ADJ	sullen, of a person
+peaceful	tranquil	tranquil	ADJ	free from disturbance
+calm	placid	placid	ADJ	not easily upset
+risky	precarious	precarious	ADJ	unstable, likely to fail
+dangerous	perilous	perilous	ADJ	full of risk
+generous	munificent	munificent	ADJ	giving lavishly
+wasteful	profligate	profligate	ADJ	recklessly extravagant
+widespread	pervasive	pervasive	ADJ	spread throughout
+unclear	opaque	opaque	ADJ	hard to understand
+obvious	manifest	manifest	ADJ	plain to see
+careful	meticulous	meticulous	ADJ	attentive to detail
+fussy	fastidious	fastidious	ADJ	hard to please
+friendly	amicable	amicable	ADJ	of relations
+warm and friendly	cordial	cordial	ADJ	of manner
+bitter	acrimonious	acrimonious	ADJ	of a dispute
+slow	sluggish	sluggish	ADJ	lacking energy
+tough	resilient	resilient	ADJ	recovering quickly
+loyal	steadfast	steadfast	ADJ	unwavering
+honest	candid	candid	ADJ	frank, outspoken
+skilful	adept	adept	ADJ	highly skilled
+skillful	adept	adept	ADJ	highly skilled
+lazy	indolent	indolent	ADJ	habitually idle
+greedy	avaricious	avaricious	ADJ	for money
+arrogant	haughty	haughty	ADJ	disdainful
+rude	churlish	churlish	ADJ	mean-spirited
+noisy	obstreperous	obstreperous	ADJ	difficult to control
+secret	clandestine	clandestine	ADJ	deliberately concealed
+mysterious	enigmatic	enigmatic	ADJ	hard to interpret
+old-fashioned	archaic	archaic	ADJ	belonging to the past
+unchanging	immutable	immutable	ADJ	incapable of change
+tireless	indefatigable	indefatigable	ADJ	persisting without fatigue
+fearless	intrepid	intrepid	ADJ	adventurous
+scarce	sparse	sparse	ADJ	thinly distributed
+plentiful	copious	copious	ADJ	abundant in supply
+abundant	profuse	profuse	ADJ	produced in large amounts
+brief	terse	terse	ADJ	of speech or writing
+unimportant	trivial	trivial	ADJ	of little consequence
+ordinary	mundane	mundane	ADJ	lacking interest
+hate	abhor	abhor	VERB	regard with disgust
+hates	abhors	abhor	VERB	regard with disgust
+hated	abhorred	abhor	VERB	regard with disgust
+reveal	divulge	divulge	VERB	disclose private information
+reveals	divulges	divulge	VERB	disclose private information
+revealed	divulged	divulge	VERB	disclose private information
+explain	elucidate	elucidate	VERB	make clear
+explains	elucidates	elucidate	VERB	make clear
+explained	elucidated	elucidate	VERB	make clear
+find out	ascertain	ascertain	VERB	establish for certain
+confirm	corroborate	corroborate	VERB	support a claim
+confirmed	corroborated	corroborate	VERB	support a claim
+disprove	refute	refute	VERB	show to be false
+avoid	eschew	eschew	VERB	deliberately abstain from
+avoided	eschewed	eschew	VERB	deliberately abstain from
+abandon	forsake	forsake	VERB	renounce
+abandoned	forsook	forsake	VERB	renounce
+give up	relinquish	relinquish	VERB	cease to claim
+surrender	capitulate	capitulate	VERB	concede defeat
+surrendered	capitulated	capitulate	VERB	concede defeat
+urge	exhort	exhort	VERB	strongly encourage
+urged	exhorted	exhort	VERB	strongly encourage
+scold	berate	berate	VERB	criticize angrily
+scolded	berated	berate	VERB	criticize angrily
+condemn	denounce	denounce	VERB	publicly declare wrong
+condemned	denounced	denounce	VERB	publicly declare wrong
+weaken	undermine	undermine	VERB	erode gradually
+weakened	undermined	undermine	VERB	erode gradually
+strengthen	bolster	bolster	VERB	give support to
+strengthened	bolstered	bolster	VERB	give support to
+increase	augment	augment	VERB	add to
+increased	augmented	augment	VERB	add to
+prevent	preclude	preclude	VERB	make impossible
+prevented	precluded	preclude	VERB	make impossible
+endanger	jeopardize	jeopardize	VERB	put at risk
+endangered	jeopardized	jeopardize	VERB	put at risk
+waste	squander	squander	VERB	spend recklessly
+wasted	squandered	squander	VERB	spend recklessly
+multiply	proliferate	proliferate	VERB	increase rapidly
+shrink	dwindling	dwindling	VERB	diminish gradually
+shrank	dwindled	dwindling	VERB	diminish gradually
+fade	wane	wane	VERB	decrease in strength
+faded	waned	wane	VERB	decrease in strength
+wipe out	eradicate	eradicate	VERB	destroy completely
+cut short	curtail	curtail	VERB	reduce in extent
+make worse	exacerbate	exacerbate	VERB	aggravate a problem
+made worse	exacerbated	exacerbate	VERB	aggravate a problem
+calm down	placate	placate	VERB	make less angry
+die down	subside	subside	VERB	become less intense
+spread widely	disseminate	disseminate	VERB	distribute broadly
+think deeply	ruminate	ruminate	VERB	turn over in the mind
+ridicule	deride	deride	VERB	mock
+ridiculed	derided	deride	VERB	mock
+tolerate	brook	brook	VERB	put up with
+hinder	impede	impede	VERB	obstruct progress
+hindered	impeded	impede	VERB	obstruct progress

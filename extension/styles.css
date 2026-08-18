@@ -1,0 +1,14 @@
+/* Substituted words are marked, not shouted about. A dotted underline reads as
+   "there is something here" without the page looking broken. */
+.ci-word {
+  border-bottom: 1px dotted currentColor;
+  cursor: pointer;
+  text-decoration: none;
+}
+.ci-word:hover {
+  background: rgba(120, 120, 255, 0.16);
+  border-radius: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  .ci-word:hover { background: rgba(160, 160, 255, 0.22); }
+}

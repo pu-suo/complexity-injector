@@ -1,0 +1,117 @@
+# Sense-keyed inversions (PLAN §3 error 2; DATA_PLAN §4 stage 8).
+#
+# v1 had ONE ROW PER TRIGGER, which is exactly the data-model fault PLAN §3
+# records for the original: "the vocabulary asserted one part of speech and one
+# sense per word -- errors 1 and 2 were the data model working as written, not
+# bugs." Entries are now keyed by (trigger, sense).
+#
+# block_context : if any of these content words appear in the sentence, veto.
+#                 Each one was derived from an observed failure, not guessed.
+# require_context: if non-empty, at least one must appear.
+trigger	replacement	hard_word	pos	trigger_sense	block_context	require_context	note
+very common	ubiquitous	ubiquitous	ADJ	found everywhere			
+everywhere	ubiquitous	ubiquitous	ADV	found everywhere			
+short-lived	ephemeral	ephemeral	ADJ	lasting briefly			
+fleeting	ephemeral	ephemeral	ADJ	lasting briefly			
+talkative	loquacious	loquacious	ADJ	of a person			
+chatty	garrulous	garrulous	ADJ	of a person			
+stubborn	obstinate	obstinate	ADJ	refusing to change			
+boring	tedious	tedious	ADJ	dull and overlong			
+dull	humdrum	humdrum	ADJ	lacking variety	blade|blades|knife|knives|edge|sharpen|sharp|scissors|ache|pain|thud|roar		"dull blade" is the sharpness sense
+pointless	futile	futile	ADJ	achieving nothing			
+useless	futile	futile	ADJ	achieving nothing			
+harmful	deleterious	deleterious	ADJ	causing damage			
+harmless	innocuous	innocuous	ADJ	causing no harm			
+watchful	vigilant	vigilant	ADJ	alert to danger			
+cautious	circumspect	circumspect	ADJ	prudently wary	optimism|optimistic|welcome		"cautious optimism" is fixed
+shrewd	astute	astute	ADJ	sharp-witted			
+wordy	verbose	verbose	ADJ	using too many words			
+long-winded	verbose	verbose	ADJ	using too many words			
+gloomy	morose	morose	ADJ	sullen, of a person	weather|sky|skies|forecast|room|day|outlook|prospects	he|she|him|her|his|man|woman|face	morose is of people, not weather
+peaceful	tranquil	tranquil	ADJ	free from disturbance	protest|protests|demonstration|march|transition|resolution|settlement		"peaceful protest" is political, not calm
+calm	placid	placid	ADJ	not easily upset			
+risky	precarious	precarious	ADJ	unstable, likely to fail			
+dangerous	perilous	perilous	ADJ	full of risk	criminal|weapon|offender|dog|animal		perilous describes situations, not agents
+generous	munificent	munificent	ADJ	giving lavishly	portion|serving|helping|amount|size		
+wasteful	profligate	profligate	ADJ	recklessly extravagant			
+widespread	pervasive	pervasive	ADJ	spread throughout			
+unclear	opaque	opaque	ADJ	hard to understand	i|we|you|unsure|whether|myself		a person cannot be "opaque as to whether"
+obvious	manifest	manifest	ADJ	plain to see			DEFER: hard_word is polysemous
+careful	meticulous	meticulous	ADJ	attentive to detail	careful not|be careful|watch out		"be careful not to" is a warning, not praise
+fussy	fastidious	fastidious	ADJ	hard to please			
+friendly	amicable	amicable	ADJ	of relations between parties	user|administration|business|eco|environmentally|family	settlement|divorce|split|separation|terms|agreement|relations	amicable is for disputes; blocks X-friendly compounds
+warm and friendly	cordial	cordial	ADJ	of manner			
+bitter	acrimonious	acrimonious	ADJ	of a dispute	taste|tastes|flavour|flavor|sweet|chocolate|coffee|almond|dust|cold|wind|nutmeg	dispute|divorce|battle|feud|row|split|exchange|debate	blocks the taste sense
+slow	sluggish	sluggish	ADJ	lacking energy	guitar|song|ballad|tempo|music|track|dance|motion|cooker		"slow" in music is a tempo term
+tough	resilient	resilient	ADJ	recovering from setbacks	neighbourhood|neighborhood|question|decision|call|times|luck|guy|steak|meat	bounce|recover|setback|adversity|resilience	blocks "tough neighborhoods/times"
+loyal	steadfast	steadfast	ADJ	unwavering			
+honest	candid	candid	ADJ	frank and outspoken			
+skilful	adept	adept	ADJ	highly skilled			
+skillful	adept	adept	ADJ	highly skilled			
+lazy	indolent	indolent	ADJ	habitually idle	sunday|afternoon|river|summer|eye		"lazy afternoon" is leisurely, not idle
+greedy	avaricious	avaricious	ADJ	for money			
+arrogant	haughty	haughty	ADJ	disdainful			
+rude	churlish	churlish	ADJ	mean-spirited and ungracious	gesture|word|words|language|joke|awakening	refuse|refusing|ungracious|decline|churl	churlish is about ingratitude, not obscenity
+noisy	obstreperous	obstreperous	ADJ	unruly, hard to control	engine|machine|traffic|fan|neighbour|neighbor		obstreperous is of people
+secret	clandestine	clandestine	ADJ	deliberately concealed activity	service|santa|weapon|sauce|ballot|garden		blocks named entities and fixed phrases
+mysterious	enigmatic	enigmatic	ADJ	hard to interpret			
+old-fashioned	archaic	archaic	ADJ	belonging to the past			
+unchanging	immutable	immutable	ADJ	incapable of change			
+tireless	indefatigable	indefatigable	ADJ	persisting without fatigue			
+fearless	intrepid	intrepid	ADJ	adventurous			
+plentiful	copious	copious	ADJ	abundant in supply			
+abundant	profuse	profuse	ADJ	produced in large amounts	rain|rainfall|harvest|crop		profuse pairs with apologies/bleeding/sweating
+brief	terse	terse	ADJ	of speech or writing	filing|court|legal|memo|case|attorney|lawyer|judge|stop|visit|pause|moment|encounter	statement|reply|answer|response|remark|comment|note|email	blocks the legal-document AND the duration senses
+unimportant	trivial	trivial	ADJ	of little consequence			
+ordinary	mundane	mundane	ADJ	dull and routine, of things	people|person|man|woman|citizens|folk|americans|worker|workers	task|tasks|chore|routine|detail|life|work|job	mundane means dull, not "average"; blocks "ordinary people"
+scarce	scant	scant	ADJ	barely sufficient			replaces v1's scarce->sparse, which confused quantity with distribution
+hate	abhor	abhor	VERB	regard with disgust	speech|crime|crimes|group|mail		"hate speech/crime" are fixed
+hates	abhors	abhor	VERB	regard with disgust	speech|crime|crimes|group|mail		
+hated	abhorred	abhor	VERB	regard with disgust	speech|crime|crimes|group|mail		
+reveal	divulge	divulge	VERB	disclose private information	gas|light|surface|image|scan|study|photo|picture|skin	source|name|detail|details|identity|information|secret|content|terms|salary	divulge takes information, not phenomena
+reveals	divulges	divulge	VERB	disclose private information	gas|light|surface|image|scan|study|photo|picture|skin	source|name|detail|details|identity|information|secret|content|terms|salary	
+revealed	divulged	divulge	VERB	disclose private information	gas|light|surface|image|scan|study|photo|picture|skin	source|name|detail|details|identity|information|secret|content|terms|salary	
+explain	elucidate	elucidate	VERB	make an idea clear			
+explains	elucidates	elucidate	VERB	make an idea clear			
+find out	ascertain	ascertain	VERB	establish for certain			
+confirm	corroborate	corroborate	VERB	support a claim with evidence	booking|reservation|flight|appointment|attendance		corroborate needs evidence, not admin confirmation
+confirmed	corroborated	corroborate	VERB	support a claim with evidence	booking|reservation|flight|appointment|attendance		
+disprove	refute	refute	VERB	show to be false			
+avoid	eschew	eschew	VERB	deliberately abstain from	collision|crash|accident|obstacle|traffic|danger	meat|alcohol|publicity|violence|politics|technology|use	eschew is principled abstention, not evasion
+avoided	eschewed	eschew	VERB	deliberately abstain from	collision|crash|accident|obstacle|traffic|danger		
+abandon	forsake	forsake	VERB	renounce a person or principle	car|vehicle|building|ship|plan|project|site|baby		forsake is moral; blocks physical abandonment
+give up	relinquish	relinquish	VERB	cease to claim something held	hope|smoking|trying|drinking	control|title|claim|right|rights|power|seat|throne|stake	relinquish needs an entitlement
+surrender	capitulate	capitulate	VERB	concede defeat in a contest	police|weapon|passport|arms|himself|herself		blocks "surrender to police"
+urge	exhort	exhort	VERB	strongly encourage			
+urged	exhorted	exhort	VERB	strongly encourage			
+scold	berate	berate	VERB	criticize angrily			
+scolded	berated	berate	VERB	criticize angrily			
+condemn	denounce	denounce	VERB	publicly declare wrong			
+condemned	denounced	denounce	VERB	publicly declare wrong	building|property|house|structure		"condemned building" is the legal sense
+weaken	undermine	undermine	VERB	erode gradually and indirectly			
+weakened	undermined	undermine	VERB	erode gradually and indirectly	state|condition|immune|patient|coral		attributive "undermined state" does not work
+strengthen	bolster	bolster	VERB	give support to			
+strengthened	bolstered	bolster	VERB	give support to			
+increase	augment	augment	VERB	add to			
+increased	augmented	augment	VERB	add to			
+prevent	preclude	preclude	VERB	make impossible			
+prevented	precluded	preclude	VERB	make impossible			
+endanger	jeopardize	jeopardize	VERB	put at risk			
+endangered	jeopardized	jeopardize	VERB	put at risk	species|habitat|wildlife|list		"endangered species" is fixed
+waste	squander	squander	VERB	spend a resource recklessly	construction|food|nuclear|toxic|water|management|disposal|landfill	money|chance|opportunity|talent|lead|fortune|inheritance	blocks the refuse-noun sense
+wasted	squandered	squander	VERB	spend a resource recklessly	construction|food|nuclear|toxic|water		
+multiply	proliferate	proliferate	VERB	increase rapidly in number			
+fade	wane	wane	VERB	decrease in strength or influence	colour|color|dye|paint|fabric|jeans|photograph		wane is of power/interest, not pigment
+faded	waned	wane	VERB	decrease in strength or influence	colour|color|dye|paint|fabric|jeans		
+wipe out	eradicate	eradicate	VERB	destroy something undesirable	coast|town|village|city|population|army|team	disease|poverty|malaria|polio|deficit|corruption|hunger|smallpox	eradicate takes afflictions, not places
+cut short	curtail	curtail	VERB	reduce in extent			
+make worse	exacerbate	exacerbate	VERB	aggravate a problem			
+made worse	exacerbated	exacerbate	VERB	aggravate a problem			
+calm down	placate	placate	VERB	make less angry			
+die down	subside	subside	VERB	become less intense			
+spread widely	disseminate	disseminate	VERB	distribute information broadly	disease|virus|infection|fire|rumour		disseminate is deliberate distribution
+think deeply	ruminate	ruminate	VERB	turn over in the mind			
+ridicule	deride	deride	VERB	mock			
+ridiculed	derided	deride	VERB	mock			
+hinder	impede	impede	VERB	obstruct progress			
+hindered	impeded	impede	VERB	obstruct progress			

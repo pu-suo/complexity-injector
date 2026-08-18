@@ -1,0 +1,31 @@
+# Secrets
+.env
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+
+# Generated: rebuild with scripts/build_extension.py
+extension/content.bundle.js
+
+# Vendored runtime: rebuild with scripts/vendor_ort.py
+extension/lib/ort/
+
+# Generated from the model and inventory: scripts/export_runtime_assets.py
+extension/lib/judge.onnx
+
+# Corpus, derived tables and trained models. Produced by the pipeline; tens of
+# gigabytes of binaries do not belong in version control.
+data/raw/
+data/interim/
+data/tables/
+data/models/
+
+# Third-party page captures used for offline measurement.
+samples/

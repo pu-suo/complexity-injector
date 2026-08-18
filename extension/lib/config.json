@@ -1,0 +1,15 @@
+{
+  "threshold": 0.6,
+  "maxLen": 128,
+  "spanOpen": 30522,
+  "spanClose": 30523,
+  "keep": 30524,
+  "cls": 101,
+  "sep": 102,
+  "pad": 0,
+  "unk": 100,
+  "model": "bert-base-uncased fp32",
+  "expectedCoverage": 0.414,
+  "expectedPrecision": 0.904,
+  "minDifficultyGain": 2.0
+}

@@ -1,0 +1,243 @@
+// Content script: find spans on the page, get them judged, swap them in place.
+//
+// Scope rules exist because a wrong swap inside code, an input, or a legal
+// notice is far worse than a missed one -- the design bar is "never corrupt the
+// page", and 6.7 makes abstention free.
+
+const SKIP_TAGS = new Set([
+  "SCRIPT", "STYLE", "NOSCRIPT", "CODE", "PRE", "KBD", "SAMP", "VAR",
+  "TEXTAREA", "INPUT", "SELECT", "OPTION", "BUTTON", "SVG", "MATH",
+  "TITLE", "HEAD", "IFRAME", "OBJECT", "CANVAS",
+]);
+const SKIP_ROLES = new Set(["textbox", "searchbox", "code", "math"]);
+const MIN_SENTENCE_WORDS = 5;
+const BATCH = 12;
+
+let proposer = null;
+let glosses = {};
+let config = null;
+let counter = 0;
+let observing = false;
+let enabled = true;
+
+async function boot() {
+  const url = p => chrome.runtime.getURL(p);
+  const [table, gl, cfg] = await Promise.all([
+    fetch(url("lib/inversions.json")).then(r => r.json()),
+    fetch(url("lib/glosses.json")).then(r => r.json()),
+    fetch(url("lib/config.json")).then(r => r.json()),
+  ]);
+  proposer = new Proposer(table);
+  glosses = gl;
+  config = cfg;
+  ({ enabled } = await chrome.storage.sync.get({ enabled: true }));
+  // Only warm the model when we are actually going to use it: the session is
+  // 435 MB, and holding it for a user who has switched off is pure waste.
+  if (enabled) chrome.runtime.sendMessage({ type: "init" });
+}
+
+// Put every swapped word back. The original is kept on the element itself, so
+// this needs no bookkeeping and works even on nodes we no longer have refs to.
+function revertAll(root = document) {
+  let n = 0;
+  for (const el of root.querySelectorAll(".ci-word")) {
+    el.replaceWith(document.createTextNode(el.dataset.ciOriginal));
+    n++;
+  }
+  for (const host of root.querySelectorAll("*")) {
+    if (host.shadowRoot) n += revertAll(host.shadowRoot);
+  }
+  return n;
+}
+
+function isEditable(node) {
+  return node.isContentEditable
+      || (node.closest && node.closest("[contenteditable='true']"));
+}
+
+function eligible(textNode) {
+  const parent = textNode.parentElement;
+  if (!parent) return false;
+  if (SKIP_TAGS.has(parent.tagName)) return false;
+  if (isEditable(parent)) return false;
+  const role = parent.getAttribute && parent.getAttribute("role");
+  if (role && SKIP_ROLES.has(role)) return false;
+  if (parent.closest("a")) return false;   // never rewrite link text
+  const t = textNode.nodeValue;
+  return t && t.trim().length > 20;
+}
+
+// Only what the reader can actually see. Scoring the whole DOM up front wastes
+// the latency budget on text nobody reaches.
+function inViewport(node) {
+  const el = node.parentElement;
+  if (!el) return false;
+  const r = el.getBoundingClientRect();
+  return r.bottom > -200 && r.top < window.innerHeight + 600
+      && r.width > 0 && r.height > 0;
+}
+
+// A TreeWalker stops at shadow boundaries. Reddit, YouTube and most modern
+// component frameworks put their content inside shadow roots, so walking only
+// the light DOM finds almost nothing on exactly the sites we care about.
+function collect(root = document.body, out = []) {
+  const walker = document.createTreeWalker(
+    root, NodeFilter.SHOW_TEXT,
+    { acceptNode: n => (eligible(n) && inViewport(n))
+        ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT });
+  let n;
+  while ((n = walker.nextNode())) out.push(n);
+  for (const el of root.querySelectorAll("*")) {
+    if (el.shadowRoot) collect(el.shadowRoot, out);
+  }
+  return out;
+}
+
+function buildJobs(textNodes) {
+  const jobs = [];
+  for (const node of textNodes) {
+    const text = node.nodeValue;
+    for (const sent of sentences(text)) {
+      if ((sent.text.match(/\S+/g) || []).length < MIN_SENTENCE_WORDS) continue;
+      for (const p of proposer.proposals(sent.text)) {
+        jobs.push({
+          id: `s${counter++}`,
+          node, nodeOffset: sent.start + p.start,
+          length: p.end - p.start, surface: p.surface,
+          candidates: p.candidates,
+          // The judge was trained on span markers, not on a blanked slot.
+          marked: sent.text.slice(0, p.start) + "<t> " + p.surface
+                + " </t>" + sent.text.slice(p.end),
+        });
+      }
+    }
+  }
+  return jobs;
+}
+
+function makeSwap(job, decision) {
+  const entry = job.candidates[decision.index];
+  const span = document.createElement("span");
+  span.className = "ci-word";
+  span.textContent = matchCase(job.surface, entry.r);
+  span.dataset.ciOriginal = job.surface;
+  span.dataset.ciScore = decision.score.toFixed(3);
+  const gloss = glosses[entry.w] || "";
+  span.title = `${entry.w}${gloss ? " \u2014 " + gloss : ""}\nwas: ${job.surface}`
+             + `\n(click to revert)`;
+  span.addEventListener("click", ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    span.replaceWith(document.createTextNode(span.dataset.ciOriginal));
+  });
+  return span;
+}
+
+// Apply EVERY accepted swap in a text node at once. Doing one per node per pass
+// discarded 43% of available spans on paragraph-sized text -- measured on
+// six-sentence blocks, which is what a long forum comment looks like.
+// Rebuilding the node in a single pass also keeps every offset valid, which
+// applying swaps one at a time does not.
+function applyAll(node, jobs) {
+  if (!node.parentNode) return 0;
+  const text = node.nodeValue;
+  const ok = jobs
+    .filter(({ job }) => text.substr(job.nodeOffset, job.length) === job.surface)
+    .sort((a, b) => a.job.nodeOffset - b.job.nodeOffset);
+  if (!ok.length) return 0;
+
+  const frag = document.createDocumentFragment();
+  let cursor = 0;
+  for (const { job, decision } of ok) {
+    if (job.nodeOffset < cursor) continue;          // overlapping span
+    if (job.nodeOffset > cursor) {
+      frag.append(document.createTextNode(text.slice(cursor, job.nodeOffset)));
+    }
+    frag.append(makeSwap(job, decision));
+    cursor = job.nodeOffset + job.length;
+  }
+  if (cursor < text.length) frag.append(document.createTextNode(text.slice(cursor)));
+  node.replaceWith(frag);
+  return ok.length;
+}
+
+async function pass() {
+  if (!proposer || !enabled) return;
+  const jobs = buildJobs(collect());
+  if (!jobs.length) return;
+  const pending = new Map();      // node -> [{job, decision}]
+
+  for (let i = 0; i < jobs.length; i += BATCH) {
+    const batch = jobs.slice(i, i + BATCH);
+    const reply = await chrome.runtime.sendMessage({
+      type: "score",
+      spans: batch.map(({ id, marked, candidates }) => ({ id, marked, candidates })),
+    });
+    if (!reply || !reply.ok) {
+      console.warn("[injector] scoring failed:", reply && reply.error);
+      return;
+    }
+    const byId = new Map(batch.map(j => [j.id, j]));
+    for (const r of reply.results) {
+      if (!r.decision) continue;
+      const job = byId.get(r.id);
+      if (!job) continue;
+      if (!pending.has(job.node)) pending.set(job.node, []);
+      pending.get(job.node).push({ job, decision: r.decision });
+    }
+  }
+  // Mutate only after all scoring is done: every offset was computed against
+  // the pre-edit text, and editing mid-flight invalidates the rest.
+  let applied = 0;
+  for (const [node, list] of pending) applied += applyAll(node, list);
+  if (applied) console.debug(`[injector] ${applied} swaps`);
+}
+
+function observe() {
+  if (observing) return;
+  observing = true;
+  let timer = null;
+  const nudge = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => pass().catch(e => console.warn("[injector]", e)), 400);
+  };
+  new MutationObserver(nudge).observe(document.body,
+    { childList: true, subtree: true });
+  window.addEventListener("scroll", nudge, { passive: true });
+}
+
+// The popup asks the page how many words it changed. Counting the DOM rather
+// than tracking a running total means the answer stays right after the user
+// clicks words to revert them.
+function countSwaps(root = document) {
+  let n = root.querySelectorAll(".ci-word").length;
+  for (const host of root.querySelectorAll("*")) {
+    if (host.shadowRoot) n += countSwaps(host.shadowRoot);
+  }
+  return n;
+}
+
+chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
+  if (msg.type !== "count") return false;
+  respond({ ok: true, count: countSwaps() });
+  return true;
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "sync" || !changes.enabled) return;
+  enabled = changes.enabled.newValue;
+  if (enabled) {
+    chrome.runtime.sendMessage({ type: "init" });
+    pass().catch(e => console.warn("[injector]", e));
+  } else {
+    // Switching off restores the page immediately -- leaving substitutions
+    // behind would make "off" mean "off for new text only", which is not what
+    // the switch says.
+    const n = revertAll();
+    if (n) console.debug(`[injector] reverted ${n} swaps`);
+  }
+});
+
+boot()
+  .then(() => pass())
+  .then(observe)
+  .catch(e => console.warn("[injector] boot failed:", e));
