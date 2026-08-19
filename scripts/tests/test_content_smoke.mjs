@@ -67,14 +67,20 @@ Object.assign(globalThis, {
   window, document,
   NodeFilter: window.NodeFilter,
   MutationObserver: class {
-    constructor(fn) { mutationCallbacks.push(fn); }
+    constructor(fn) { this.fn = fn; mutationCallbacks.push(fn); }
     observe() {}
+    disconnect() {
+      const i = mutationCallbacks.indexOf(this.fn);
+      if (i >= 0) mutationCallbacks.splice(i, 1);
+    }
   },
   console,
   chrome: {
     storage,
     runtime: {
-      // The content script answers the popup's "count" query on this channel.
+      // Present while the extension is live; cleared when it is reloaded, which
+      // is how a content script detects that it has been orphaned.
+      id: "smoke-test-extension-id",
       onMessage: { addListener: fn => messageListeners.push(fn) },
       getURL: p => p,
       sendMessage: async msg => {
@@ -173,6 +179,29 @@ console.log(`count (on/off)   : ${countOn ? countOn.count : "?"} / `
 console.log(`off -> reverted  : ${afterOff === before ? "yes" : "NO"}`);
 console.log(`off -> inert     : ${inertOk ? "yes" : "NO"} (${mutationCallbacks.length} observer(s) fired)`);
 console.log(`on  -> resumed   : ${backOn} swaps`);
+
+// ---- surviving an extension reload -------------------------------------
+// Reloading orphans this content script: chrome.runtime.id disappears and
+// every API call throws. It must retire quietly, not log on every scroll.
+const beforeReload = scored.length;
+chrome.runtime.id = undefined;
+chrome.runtime.sendMessage = async () => {
+  throw new Error("Extension context invalidated.");
+};
+let threw = null;
+try {
+  for (const fn of [...mutationCallbacks]) fn([], null);
+  await new Promise(r => setTimeout(r, 600));
+} catch (e) {
+  threw = e;
+}
+if (threw) fail.push(`threw after extension reload: ${threw.message}`);
+if (scored.length !== beforeReload) fail.push("kept scoring after reload");
+if (mutationCallbacks.length) {
+  fail.push("did not disconnect its observer after reload");
+}
+console.log(`reload -> quiet   : ${!threw ? "yes" : "NO"}, `
+          + `observers left ${mutationCallbacks.length}`);
 
 if (fail.length) {
   console.error("\nFAILED:\n  " + fail.join("\n  "));

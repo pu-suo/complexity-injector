@@ -38,7 +38,9 @@ def main() -> None:
     files = included()
 
     required = {"manifest.json", "content.bundle.js", "lib/judge.onnx",
-                "lib/ort/ort.mjs", "lib/config.json", "lib/vocab.txt"}
+                "lib/ort/ort.mjs", "lib/config.json", "lib/vocab.txt",
+                "lib/tokenizer.js", "lib/judge.js", "lib/serialize.js",
+                "offscreen.html", "offscreen.js", "background.js"}
     have = {str(p.relative_to(EXT)) for p in files}
     missing = required - have
     if missing:

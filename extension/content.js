@@ -19,6 +19,8 @@ let config = null;
 let counter = 0;
 let observing = false;
 let enabled = true;
+let running = false;
+let dead = false;
 
 async function boot() {
   const url = p => chrome.runtime.getURL(p);
@@ -33,7 +35,7 @@ async function boot() {
   ({ enabled } = await chrome.storage.sync.get({ enabled: true }));
   // Only warm the model when we are actually going to use it: the session is
   // 435 MB, and holding it for a user who has switched off is pure waste.
-  if (enabled) chrome.runtime.sendMessage({ type: "init" });
+  if (enabled) chrome.runtime.sendMessage({ type: "init" }).catch(() => {});
 }
 
 // Put every swapped word back. The original is kept on the element itself, so
@@ -160,18 +162,52 @@ function applyAll(node, jobs) {
   return ok.length;
 }
 
+// Reloading the extension orphans the content scripts already in the page:
+// their chrome.runtime handle stops working and every call throws "Extension
+// context invalidated". That is normal during development and after an update,
+// so retire quietly instead of logging on every scroll.
+function contextGone() {
+  return dead || !chrome.runtime?.id;
+}
+
+function retire(why) {
+  if (dead) return;
+  dead = true;
+  disconnect();
+  console.debug(`[injector] stopped: ${why}`);
+}
+
 async function pass() {
-  if (!proposer || !enabled) return;
+  if (!proposer || !enabled || contextGone()) return;
+  // A scroll and a mutation can both fire while a pass is still awaiting
+  // scores. Overlapping passes score the same spans twice and race on the
+  // same text nodes.
+  if (running) return;
+  running = true;
+  try {
+    await runPass();
+  } finally {
+    running = false;
+  }
+}
+
+async function runPass() {
   const jobs = buildJobs(collect());
   if (!jobs.length) return;
   const pending = new Map();      // node -> [{job, decision}]
 
   for (let i = 0; i < jobs.length; i += BATCH) {
     const batch = jobs.slice(i, i + BATCH);
-    const reply = await chrome.runtime.sendMessage({
-      type: "score",
-      spans: batch.map(({ id, marked, candidates }) => ({ id, marked, candidates })),
-    });
+    let reply;
+    try {
+      reply = await chrome.runtime.sendMessage({
+        type: "score",
+        spans: batch.map(({ id, marked, candidates }) => ({ id, marked, candidates })),
+      });
+    } catch (e) {
+      retire(String(e));
+      return;
+    }
     if (!reply || !reply.ok) {
       console.warn("[injector] scoring failed:", reply && reply.error);
       return;
@@ -192,16 +228,29 @@ async function pass() {
   if (applied) console.debug(`[injector] ${applied} swaps`);
 }
 
+let observer = null;
+let nudge = null;
+let nudgeTimer = null;
+
+function disconnect() {
+  observer?.disconnect();
+  if (nudge) window.removeEventListener("scroll", nudge);
+  clearTimeout(nudgeTimer);
+  observer = null;
+  nudge = null;
+}
+
 function observe() {
   if (observing) return;
   observing = true;
-  let timer = null;
-  const nudge = () => {
-    clearTimeout(timer);
-    timer = setTimeout(() => pass().catch(e => console.warn("[injector]", e)), 400);
+  nudge = () => {
+    if (contextGone()) return retire("extension reloaded");
+    clearTimeout(nudgeTimer);
+    nudgeTimer = setTimeout(
+      () => pass().catch(e => console.warn("[injector]", e)), 400);
   };
-  new MutationObserver(nudge).observe(document.body,
-    { childList: true, subtree: true });
+  observer = new MutationObserver(nudge);
+  observer.observe(document.body, { childList: true, subtree: true });
   window.addEventListener("scroll", nudge, { passive: true });
 }
 
@@ -226,7 +275,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "sync" || !changes.enabled) return;
   enabled = changes.enabled.newValue;
   if (enabled) {
-    chrome.runtime.sendMessage({ type: "init" });
+    chrome.runtime.sendMessage({ type: "init" }).catch(() => {});
     pass().catch(e => console.warn("[injector]", e));
   } else {
     // Switching off restores the page immediately -- leaving substitutions

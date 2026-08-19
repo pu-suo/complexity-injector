@@ -3,6 +3,7 @@
 import * as ort from "./lib/ort/ort.mjs";
 import { WordPiece } from "./lib/tokenizer.js";
 import { Judge } from "./lib/judge.js";
+import { makeQueue } from "./lib/serialize.js";
 
 ort.env.wasm.wasmPaths = chrome.runtime.getURL("lib/ort/");
 // A browser tab does not get the whole machine. Cap threads so scoring cannot
@@ -14,6 +15,9 @@ ort.env.wasm.wasmPaths = chrome.runtime.getURL("lib/ort/");
 ort.env.wasm.numThreads = self.crossOriginIsolated
   ? Math.min(4, navigator.hardwareConcurrency || 1)
   : 1;
+
+// One inference at a time; see lib/serialize.js for why.
+const serialize = makeQueue();
 
 let ready = null;
 let judge = null;
@@ -45,7 +49,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
 
   if (msg.type === "score") {
     ready = ready || init();
-    ready.then(async () => {
+    ready.then(() => serialize(async () => {
       const out = [];
       for (const span of msg.spans) {
         const cands = span.candidates.map(c => c.r);
@@ -53,8 +57,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
         const decision = judge.decide(scores, config.threshold);
         out.push({ id: span.id, decision, scores });
       }
-      respond({ ok: true, results: out, backend: judge.backend });
-    }).catch(e => respond({ ok: false, error: String(e) }));
+      return { ok: true, results: out, backend: judge.backend };
+    }))
+      .then(respond)
+      .catch(e => respond({ ok: false, error: String(e) }));
     return true;
   }
   return false;
