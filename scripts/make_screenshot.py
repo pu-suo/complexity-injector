@@ -21,21 +21,27 @@ from PIL import Image, ImageChops
 W, H = 1280, 800
 
 
-def trim_margin(im: Image.Image) -> Image.Image:
+def trim_margin(im: Image.Image, backdrop=(255, 255, 255)) -> Image.Image:
     """Find the window inside a macOS capture and drop everything around it.
 
-    The alpha channel is no help: the drop shadow is semi-transparent and
-    reaches the edges of the frame, so an alpha bounding box returns almost the
-    whole image. Compositing onto black and taking the bounding box of what is
-    not black finds the window itself.
+    The alpha channel is no help for locating it: the drop shadow is
+    semi-transparent and reaches the edges of the frame, so an alpha bounding
+    box returns almost the whole image. Compositing onto black and taking the
+    bounding box of what is not black finds the window.
+
+    The result is then composited onto `backdrop` rather than black, so the
+    window's rounded corners and shadow blend into the page instead of leaving
+    dark notches at the corners.
     """
-    rgb = im.convert("RGB") if im.mode != "RGB" else im
-    if im.mode == "RGBA":
-        flat = Image.new("RGB", im.size, (0, 0, 0))
-        flat.paste(im, mask=im.getchannel("A"))
-        rgb = flat
-    box = ImageChops.difference(rgb, Image.new("RGB", im.size, (0, 0, 0))).getbbox()
-    return rgb.crop(box) if box else rgb
+    if im.mode != "RGBA":
+        return im.convert("RGB")
+    alpha = im.getchannel("A")
+    on_black = Image.new("RGB", im.size, (0, 0, 0))
+    on_black.paste(im, mask=alpha)
+    box = ImageChops.difference(on_black, Image.new("RGB", im.size, (0, 0, 0))).getbbox()
+    on_backdrop = Image.new("RGB", im.size, backdrop)
+    on_backdrop.paste(im, mask=alpha)
+    return on_backdrop.crop(box) if box else on_backdrop
 
 
 def main() -> None:
@@ -73,7 +79,9 @@ def main() -> None:
             # top-left corner, so the bars read as part of the chrome rather
             # than as a black letterbox.
             im = im.convert("RGB")
-            fill = im.getpixel((2, 2))
+            # Sample the page, not the corner: (2, 2) lands on the window's
+            # rounded corner, which is backdrop rather than chrome.
+            fill = im.getpixel((2, im.height // 2))
             scale = min(target_w / im.width, target_h / im.height)
             small = im.resize((round(im.width * scale), round(im.height * scale)),
                               Image.LANCZOS)
