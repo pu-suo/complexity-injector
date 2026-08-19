@@ -20,6 +20,7 @@ let counter = 0;
 let observing = false;
 let enabled = true;
 let running = false;
+let rerun = false;
 let dead = false;
 
 async function boot() {
@@ -42,10 +43,21 @@ async function boot() {
 // this needs no bookkeeping and works even on nodes we no longer have refs to.
 function revertAll(root = document) {
   let n = 0;
+  const touched = new Set();
   for (const el of root.querySelectorAll(".ci-word")) {
+    touched.add(el.parentNode);
     el.replaceWith(document.createTextNode(el.dataset.ciOriginal));
     n++;
   }
+  for (const el of root.querySelectorAll("[data-ci-kept]")) {
+    touched.add(el.parentNode);
+    el.replaceWith(document.createTextNode(el.textContent));
+  }
+  // Splicing elements out leaves a run of adjacent text nodes where there was
+  // one. Without merging them the paragraph stays shattered -- a sentence
+  // spanning several short nodes fails the eligibility check, so switching off
+  // and on again left the page permanently unprocessable.
+  for (const parent of touched) parent?.normalize();
   for (const host of root.querySelectorAll("*")) {
     if (host.shadowRoot) n += revertAll(host.shadowRoot);
   }
@@ -65,8 +77,16 @@ function eligible(textNode) {
   const role = parent.getAttribute && parent.getAttribute("role");
   if (role && SKIP_ROLES.has(role)) return false;
   if (parent.closest("a")) return false;   // never rewrite link text
+  // A word the user chose to keep stays kept.
+  if (parent.closest("[data-ci-kept]")) return false;
   const t = textNode.nodeValue;
-  return t && t.trim().length > 20;
+  if (!t || !t.trim()) return false;
+  if (t.trim().length > 20) return true;
+  // Short node: accept it only if it sits inside a block with real prose in
+  // it. This keeps nav labels and buttons out while letting through the
+  // fragments left behind when an earlier swap split a paragraph.
+  const block = parent.closest("p, li, td, blockquote, article, section, div");
+  return !!block && block.textContent.trim().length > 80;
 }
 
 // Only what the reader can actually see. Scoring the whole DOM up front wastes
@@ -129,7 +149,11 @@ function makeSwap(job, decision) {
              + `\n(click to revert)`;
   span.addEventListener("click", ev => {
     ev.preventDefault(); ev.stopPropagation();
-    span.replaceWith(document.createTextNode(span.dataset.ciOriginal));
+    const kept = document.createElement("span");
+    kept.dataset.ciKept = "1";
+    kept.textContent = span.dataset.ciOriginal;
+    kept.title = "kept as written";
+    span.replaceWith(kept);
   });
   return span;
 }
@@ -181,11 +205,19 @@ async function pass() {
   if (!proposer || !enabled || contextGone()) return;
   // A scroll and a mutation can both fire while a pass is still awaiting
   // scores. Overlapping passes score the same spans twice and race on the
-  // same text nodes.
-  if (running) return;
+  // same text nodes -- but simply dropping the second request loses work:
+  // toggling off and back on quickly left the page unprocessed until the
+  // next scroll. Coalesce instead, so at most one follow-up is queued.
+  if (running) {
+    rerun = true;
+    return;
+  }
   running = true;
   try {
-    await runPass();
+    do {
+      rerun = false;
+      await runPass();
+    } while (rerun && enabled && !contextGone());
   } finally {
     running = false;
   }
@@ -222,7 +254,10 @@ async function runPass() {
     }
   }
   // Mutate only after all scoring is done: every offset was computed against
-  // the pre-edit text, and editing mid-flight invalidates the rest.
+  // the pre-edit text, and editing mid-flight invalidates the rest. Re-check
+  // the switch first -- scoring is slow, and the user may have turned it off
+  // while this pass was waiting.
+  if (!enabled || contextGone()) return;
   let applied = 0;
   for (const [node, list] of pending) applied += applyAll(node, list);
   if (applied) console.debug(`[injector] ${applied} swaps`);

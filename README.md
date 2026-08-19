@@ -68,12 +68,18 @@ on. Requires Chrome 116+.
 ## Tests
 
 ```bash
-pytest scripts/tests -q                        # 60 unit tests
-python scripts/tests/test_tokenizer_parity.py  # JS tokenizer vs HuggingFace
-python scripts/tests/test_proposer_parity.py   # JS proposer vs Python pipeline
-python scripts/tests/test_inference_parity.py  # shipped ONNX vs PyTorch
-node scripts/tests/test_content_smoke.mjs      # content script against a DOM
+scripts/tests/run_all.sh          # everything
 ```
+
+| suite | what it covers |
+|---|---|
+| `test_clean.py`, `test_senses.py` | text normalization and sense constraints |
+| `test_tokenizer_parity.py` | JS tokenizer vs HuggingFace, exact token ids |
+| `test_proposer_parity.py` | JS proposer vs the Python pipeline, same spans |
+| `test_inference_parity.py` | the shipped ONNX file vs PyTorch |
+| `test_serialize.mjs` | inference queue never overlaps |
+| `test_content_smoke.mjs` | content script against a real DOM |
+| `test_scenarios.mjs` | rapid scroll, toggling, SPA navigation, shadow DOM |
 
 The three parity suites exist because the runtime is a JavaScript
 reimplementation of a Python pipeline, and a divergence there is silent: the
