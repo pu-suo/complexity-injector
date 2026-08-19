@@ -42,6 +42,7 @@ async function boot() {
 // Put every swapped word back. The original is kept on the element itself, so
 // this needs no bookkeeping and works even on nodes we no longer have refs to.
 function revertAll(root = document) {
+  hideTip();
   let n = 0;
   const touched = new Set();
   for (const el of root.querySelectorAll(".ci-word")) {
@@ -79,6 +80,7 @@ function eligible(textNode) {
   if (parent.closest("a")) return false;   // never rewrite link text
   // A word the user chose to keep stays kept.
   if (parent.closest("[data-ci-kept]")) return false;
+  if (parent.closest("[data-ci-ui]")) return false;
   const t = textNode.nodeValue;
   if (!t || !t.trim()) return false;
   if (t.trim().length > 20) return true;
@@ -137,6 +139,50 @@ function buildJobs(textNodes) {
   return jobs;
 }
 
+let tip = null;
+let tipFor = null;
+
+function hideTip() {
+  tip?.remove();
+  tip = null;
+  tipFor = null;
+}
+
+function showTip(span) {
+  if (tipFor === span) return;
+  hideTip();
+  tip = document.createElement("div");
+  tip.className = "ci-tip";
+  tip.dataset.ciUi = "1";          // never treat our own UI as page content
+  const head = document.createElement("div");
+  head.className = "ci-tip-word";
+  head.textContent = span.dataset.ciWord || span.textContent;
+  tip.append(head);
+  if (span.dataset.ciGloss) {
+    const g = document.createElement("div");
+    g.className = "ci-tip-gloss";
+    g.textContent = span.dataset.ciGloss;
+    tip.append(g);
+  }
+  const was = document.createElement("div");
+  was.className = "ci-tip-was";
+  was.textContent = `replaced "${span.dataset.ciOriginal}" \u2014 click to undo`;
+  tip.append(was);
+
+  document.body.append(tip);
+  const r = span.getBoundingClientRect();
+  const t = tip.getBoundingClientRect();
+  // Prefer above the word; flip below when there is no room, and keep the
+  // card inside the viewport horizontally.
+  const above = r.top - t.height - 8;
+  tip.style.top = `${(above > 8 ? above : r.bottom + 8) + window.scrollY}px`;
+  const left = Math.min(
+    Math.max(8, r.left + r.width / 2 - t.width / 2),
+    window.innerWidth - t.width - 8);
+  tip.style.left = `${left + window.scrollX}px`;
+  tipFor = span;
+}
+
 function makeSwap(job, decision) {
   const entry = job.candidates[decision.index];
   const span = document.createElement("span");
@@ -144,11 +190,20 @@ function makeSwap(job, decision) {
   span.textContent = matchCase(job.surface, entry.r);
   span.dataset.ciOriginal = job.surface;
   span.dataset.ciScore = decision.score.toFixed(3);
-  const gloss = glosses[entry.w] || "";
-  span.title = `${entry.w}${gloss ? " \u2014 " + gloss : ""}\nwas: ${job.surface}`
-             + `\n(click to revert)`;
+  span.dataset.ciGloss = glosses[entry.w] || "";
+  span.dataset.ciWord = entry.w;
+  // Screen readers get the same information the tooltip shows.
+  span.setAttribute("aria-label",
+    `${entry.w}, replacing ${job.surface}` + (span.dataset.ciGloss
+      ? `. ${span.dataset.ciGloss}` : ""));
+  span.addEventListener("mouseenter", () => showTip(span));
+  span.addEventListener("mouseleave", hideTip);
+  span.addEventListener("focus", () => showTip(span));
+  span.addEventListener("blur", hideTip);
+  span.tabIndex = 0;
   span.addEventListener("click", ev => {
     ev.preventDefault(); ev.stopPropagation();
+    hideTip();
     const kept = document.createElement("span");
     kept.dataset.ciKept = "1";
     kept.textContent = span.dataset.ciOriginal;

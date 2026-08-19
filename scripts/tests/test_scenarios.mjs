@@ -137,6 +137,41 @@ function check(name, cond, detail = "") {
         `count reported ${counted && counted.count}`);
 }
 
+// 10. The tooltip: it must be our own element, not a native title, or it
+//     cannot be styled, captured in a screenshot, or shown on touch.
+{
+  const s = boot(PROSE);
+  await wait(300);
+  const word = swaps()[0];
+  check("swapped words carry no native title attribute",
+        !word.hasAttribute("title"),
+        word.getAttribute("title") ? "still has title=" : "uses a custom tip");
+  check("swapped words are reachable by keyboard", word.tabIndex === 0);
+  check("swapped words expose a label to screen readers",
+        (word.getAttribute("aria-label") || "").includes(word.dataset.ciOriginal));
+
+  word.dispatchEvent(new window.MouseEvent("mouseenter"));
+  const tip = document.querySelector(".ci-tip");
+  check("hovering shows a tooltip element", !!tip);
+  if (tip) {
+    check("the tooltip names the hard word and the original",
+          tip.textContent.includes(word.dataset.ciWord) &&
+          tip.textContent.includes(word.dataset.ciOriginal),
+          tip.textContent.replace(/\s+/g, " ").slice(0, 60));
+    check("the tooltip is not itself treated as page content",
+          tip.dataset.ciUi === "1");
+  }
+  word.dispatchEvent(new window.MouseEvent("mouseleave"));
+  check("leaving hides the tooltip", !document.querySelector(".ci-tip"));
+
+  // Switching off must not strand a tooltip on the page.
+  word.dispatchEvent(new window.MouseEvent("mouseenter"));
+  await chrome.storage.sync.set({ enabled: false });
+  await wait(60);
+  check("switching off removes any open tooltip",
+        !document.querySelector(".ci-tip"));
+}
+
 const failed = results.filter(r => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} scenarios passed`);
 if (failed.length) {
